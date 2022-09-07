@@ -1,9 +1,11 @@
-FROM golang:1.19.0-bullseye
+FROM golang:1.19.0-alpine3.15
 
-WORKING_DIR /app
+WORKDIR /home/app
 
 COPY . .
 
 EXPOSE 1323
 
-CMD ['go', 'run', 'server.go']
+RUN chmod +x ./docker/go/docker-entrypoint.sh
+
+ENTRYPOINT "./docker/go/docker-entrypoint.sh"
