@@ -1,0 +1,14 @@
+version: "3.3"
+
+services:
+  go_app:
+    env_file: .env
+    build:
+      context: .
+      dockerfile: ./docker/go/Dockerfile
+    ports:
+      - "1323:1323"
+    logging:
+      driver: "local"
+      options:
+        max-size: "10m"
