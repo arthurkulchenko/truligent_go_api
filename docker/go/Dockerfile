@@ -4,7 +4,7 @@ WORKDIR /home/app
 
 COPY . .
 
-EXPOSE 1323
+EXPOSE 8080
 
 RUN chmod +x ./docker/go/docker-entrypoint.sh
 
