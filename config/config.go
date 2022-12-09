@@ -6,9 +6,17 @@ import(
 	"os"
 	"fmt"
 	"database/sql"
+	_ "github.com/jackc/pgconn"
+	_ "github.com/jackc/pgx/v4/stdlib"
+	_ "github.com/jackc/pgx/v4"
 )
 
+const DEV_CLIENT_TOKEN = "8fad429c-f54d-4b8d-87a6-874771c7f68b"
+
 const DEFAULT_PORT_NUMBER = 4000
+const MAX_OPEN_DB_CONN = 10
+const MAX_IDLE_DB_CONN = 5
+const MAX_DB_LIFETIME = 5 * time.Minute
 
 type AppConfig struct {
 	DatabaseConnections map[string]*sql.DB
@@ -30,7 +38,49 @@ func InitializeConfig() *AppConfig {
 	err := godotenv.Load()
 	if err != nil { log.Fatal("Error loading .env file") }
 	dbConns := make(map[string]*sql.DB)
+	dbCredentials := loadDbCreds()
+	for _, dbCredential := range dbCredentials {
+		url := credentialsToUrl(dbCredential)
+		dbConns[DEV_CLIENT_TOKEN] = connectSQL(url)
+	}
 	portNumber := os.Getenv("PORT_NUMBER")
 	if portNumber == "" { portNumber = DEFAULT_PORT_NUMBER }
 	return &AppConfig { DatabaseConnections: dbConns, PortNumber: fmt.Sprintf(":%v", portNumber), }
+}
+
+func connectSQL(databaseUrl string) (*DB, error) {
+	d, err := newDatabase(databaseUrl)
+	if err != nil { panic(err) }
+
+	d.SetMaxOpenConns(MAX_OPEN_DB_CONN)
+	d.SetMaxIdleConns(MAX_IDLE_DB_CONN)
+	d.SetConnMaxLifetime(MAX_DB_LIFETIME)
+	dbConn.SQL = d
+	return dbConn, nil
+}
+
+func newDatabase(databaseUrl string) (*sql.DB, error) {
+	db, err := sql.Open("pgx", databaseUrl)
+	if err != nil { return nil, err }
+	if err = db.Ping(); err != nil { return nil, err }
+
+	return db, nil
+}
+
+func credentialsToUrl(c DatabaseConfig) string {
+	return fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s", c.Host, c.Port, c.Database, c.Username, c.Password)
+}
+
+func loadDbCreds() []DatabaseConfig {
+	// TODO: Load creds from config file
+	dbCredentials := make([]DatabaseConfig, 1)
+	dbCredentials[0] = DatabaseConfig {
+		Adapter: "postgres",
+		Host: "localhost",
+		Port: "5432",
+		Database: "truligent_development",
+		Username: "truligent",
+		Password: "truligent",
+	}
+	return dbCredentials
 }
