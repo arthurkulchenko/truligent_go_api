@@ -23,20 +23,21 @@ type Company struct {
 	// BlockingEnabled bool
 	// BlockedMessage string
 	// NotificationText string
-	// TimeNextBlocking_sec int
+	// TimeNextBlockingSec int
 	// TimeNoResponseBlock string
 	// TimeBeforeNotificationSec int
 	// NewPrivateKey string
 }
 
 type ServerAccessOption struct {
-	BlockingEnabled bool `json:"blocking_enabled,omitempty"`
-	BlockedMessage string `json:"blocked_message,omitempty"`
-	NotificationText string `json:"notification_text,omitempty"`
-	TimeNextBlocking_sec int `json:"time_next_blocking_sec,omitempty"`
-	TimeNoResponseBlock string `json:"time_no_response_block,omitempty"`
+	Blocked bool                  `json:"blocked,omitempty"`
+	BlockingEnabled bool          `json:"blocking_enabled,omitempty"`
+	BlockedMessage string         `json:"blocked_message,omitempty"`
+	NotificationText string       `json:"notification_text,omitempty"`
+	TimeNextBlockingSec int       `json:"time_next_blocking_sec,omitempty"`
 	TimeBeforeNotificationSec int `json:"time_before_notification_sec,omitempty"`
-	NewPrivateKey string `json:"new_private_key,omitempty"`
+	// NewPrivateKey string          `json:"new_private_key,omitempty"`
+	// TimeNoResponseBlock string    `json:"time_no_response_block,omitempty"`
 	// Name        string   `json:"name,omitempty"`
   //   Ingredients []string `json:"ingredients,omitempty"`
   //   Organic     bool     `json:"organic,omitempty"`
@@ -103,36 +104,54 @@ func RotateToken(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "failed")
 	}
 	dbConn := appConfig.DatabaseConnections[serverIdToken] // postgresql
-	// fmt.Println("\ndbConn", dbConn, "|")
 	ctx, cancel := context.WithTimeout(context.Background(), 3 * time.Second)
 	defer cancel()
-	query := `SELECT (blocked, server_access_options) FROM companies WHERE server_access_options ->> 'local_company_id' = $1 OR id = ($1)::uuid`
+	query := `SELECT
+		blocked,
+		server_access_options ->> 'blocking_enabled',
+		server_access_options ->> 'blocked_message',
+		server_access_options ->> 'notification_text',
+		server_access_options ->> 'time_next_blocking_sec',
+		server_access_options ->> 'time_before_notification_sec'
+	FROM companies WHERE server_access_options ->> 'local_company_id' = $1 OR id = ($1)::uuid`
+	// row := dbConn.QueryRowContext(ctx, query, requestBody.CompanyId)
 	row := dbConn.QueryRowContext(ctx, query, requestBody.CompanyId)
-	// company := Company{ Blocked: false, ServerAccessOptions: ServerAccessOption{}, }
-	var company Company
-	// var count int
-	// fmt.Println("count is :", count)
-	// err = row.Scan(&count)
-	err = row.Scan(&company.Blocked, &company.ServerAccessOptions,)
-	// err = row.Scan(&company)
-	// fmt.Println("ServerAccessOptions is :", company.ServerAccessOptions.BlockingEnabled)
+	var sao ServerAccessOption
+	// var p []byte
+	// err = row.Scan(&p)
+	err = row.Scan(
+		&sao.Blocked,
+		&sao.BlockingEnabled,
+		&sao.BlockedMessage,
+		&sao.NotificationText,
+		&sao.TimeNextBlockingSec,
+		&sao.TimeBeforeNotificationSec,
+	)
+	fmt.Println("WORKS 6")
 	if err != nil {
 		log.Println(err)
 		return err
 	}
+	fmt.Println("WORKS 7")
+	// err = json.Unmarshal(p, &sao)
+	// if err != nil {
+	// 	log.Println(err)
+	// 	return err
+	// }
+	fmt.Println("WORKS 8")
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		// "hello": "hi",
-		"blocked": company.Blocked,
-		"blocking_enabled": company.ServerAccessOptions.BlockingEnabled,
-		"blocked_message": company.ServerAccessOptions.BlockedMessage,
-		"notification_text": company.ServerAccessOptions.NotificationText,
-		"time_next_blocking_sec": company.ServerAccessOptions.TimeNextBlocking_sec,
-		"time_no_response_block": company.ServerAccessOptions.TimeNoResponseBlock,
-		"time_before_notification_sec": company.ServerAccessOptions.TimeBeforeNotificationSec,
-		"new_private_key": company.ServerAccessOptions.NewPrivateKey, // "Base64.encode64(company.new_private_key.to_s).presence",
+		"blocked": sao.Blocked,
+		"blocking_enabled": sao.BlockingEnabled,
+		"blocked_message": sao.BlockedMessage,
+		"notification_text": sao.NotificationText,
+		"time_next_blocking_sec": sao.TimeNextBlockingSec,
+		"time_before_notification_sec": sao.TimeBeforeNotificationSec,
 	})
 	hmacSampleSecret := "secret"
+	fmt.Println("WORKS 1")
 	tokenString, err := token.SignedString([]byte(hmacSampleSecret))
+	fmt.Println("WORKS 2")
 	if err != nil {
 		log.Println(err)
 		return err
@@ -141,17 +160,3 @@ func RotateToken(c echo.Context) error {
 	// UPDATE company
 	return c.JSON(http.StatusOK, echo.Map{ "data": tokenString, })
 }
-
-	// fn wip() {
-		// callback := c.QueryParam("callback")
-  // var content struct {
-	// 	Response  string    `json:"response"`
-	// 	Timestamp time.Time `json:"timestamp"`
-	// 	Random    int       `json:"random"`
-	// }
-	// content.Response = "Sent via JSONP"
-	// content.Timestamp = time.Now().UTC()
-	// content.Random = 1000
-	// return c.JSONP(http.StatusOK, callback, &content)
-	// }
-
