@@ -17,17 +17,17 @@ import(
 	"fmt"
 )
 
-type Company struct {
-	Blocked bool
-	ServerAccessOptions ServerAccessOption
-	// BlockingEnabled bool
-	// BlockedMessage string
-	// NotificationText string
-	// TimeNextBlockingSec int
-	// TimeNoResponseBlock string
-	// TimeBeforeNotificationSec int
-	// NewPrivateKey string
-}
+// type Company struct {
+// 	Blocked bool
+// 	ServerAccessOptions ServerAccessOption
+// 	// BlockingEnabled bool
+// 	// BlockedMessage string
+// 	// NotificationText string
+// 	// TimeNextBlockingSec int
+// 	// TimeNoResponseBlock string
+// 	// TimeBeforeNotificationSec int
+// 	// NewPrivateKey string
+// }
 
 type ServerAccessOption struct {
 	Blocked bool                  `json:"blocked,omitempty"`
@@ -36,14 +36,6 @@ type ServerAccessOption struct {
 	NotificationText string       `json:"notification_text,omitempty"`
 	TimeNextBlockingSec int       `json:"time_next_blocking_sec,omitempty"`
 	TimeBeforeNotificationSec int `json:"time_before_notification_sec,omitempty"`
-	// NewPrivateKey string          `json:"new_private_key,omitempty"`
-	// TimeNoResponseBlock string    `json:"time_no_response_block,omitempty"`
-	// Name        string   `json:"name,omitempty"`
-  //   Ingredients []string `json:"ingredients,omitempty"`
-  //   Organic     bool     `json:"organic,omitempty"`
-  //   Dimensions  struct {
-  //       Weight float64 `json:"weight,omitempty"`
-  //   } `json:"dimensions,omitempty"`
 }
 
 func (a *ServerAccessOption) Scan(value interface{}) error {
@@ -107,19 +99,15 @@ func RotateToken(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3 * time.Second)
 	defer cancel()
 	query := `SELECT
-		blocked,
-		server_access_options ->> 'blocking_enabled',
-		server_access_options ->> 'blocked_message',
-		server_access_options ->> 'notification_text',
-		server_access_options ->> 'time_next_blocking_sec',
-		server_access_options ->> 'time_before_notification_sec'
+		COALESCE(blocked, false),
+		COALESCE(CAST(nullif(server_access_options ->> 'blocking_enabled', 'NUL') AS bool), false),
+		COALESCE(CAST(nullif(server_access_options ->> 'blocked_message', 'NULL') AS text), ''),
+		COALESCE(CAST(nullif(server_access_options ->> 'notification_text', 'NULL') AS text), ''),
+		COALESCE(CAST(server_access_options ->> 'time_next_blocking_sec' AS int), 0),
+		COALESCE(CAST(server_access_options ->> 'time_before_notification_sec' AS int), 0)
 	FROM companies WHERE server_access_options ->> 'local_company_id' = $1 OR id = ($1)::uuid`
-	// row := dbConn.QueryRowContext(ctx, query, requestBody.CompanyId)
-	row := dbConn.QueryRowContext(ctx, query, requestBody.CompanyId)
 	var sao ServerAccessOption
-	// var p []byte
-	// err = row.Scan(&p)
-	err = row.Scan(
+	err = dbConn.QueryRowContext(ctx, query, requestBody.CompanyId).Scan(
 		&sao.Blocked,
 		&sao.BlockingEnabled,
 		&sao.BlockedMessage,
@@ -127,19 +115,10 @@ func RotateToken(c echo.Context) error {
 		&sao.TimeNextBlockingSec,
 		&sao.TimeBeforeNotificationSec,
 	)
-	fmt.Println("WORKS 6")
 	if err != nil {
 		log.Println(err)
 		return err
 	}
-	fmt.Println("WORKS 7")
-	// err = json.Unmarshal(p, &sao)
-	// if err != nil {
-	// 	log.Println(err)
-	// 	return err
-	// }
-	fmt.Println("WORKS 8")
-
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"blocked": sao.Blocked,
 		"blocking_enabled": sao.BlockingEnabled,
@@ -149,14 +128,11 @@ func RotateToken(c echo.Context) error {
 		"time_before_notification_sec": sao.TimeBeforeNotificationSec,
 	})
 	hmacSampleSecret := "secret"
-	fmt.Println("WORKS 1")
 	tokenString, err := token.SignedString([]byte(hmacSampleSecret))
-	fmt.Println("WORKS 2")
 	if err != nil {
 		log.Println(err)
 		return err
 	}
-	fmt.Println("tokenString")
-	// UPDATE company
+	// TODO: UPDATE companies server_access_options ->> 'time_last_successful_ping_at'
 	return c.JSON(http.StatusOK, echo.Map{ "data": tokenString, })
 }
