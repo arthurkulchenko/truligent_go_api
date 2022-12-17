@@ -15,9 +15,10 @@ func (c *Client) OmsPingCall() string {
 func OmsPing(c echo.Context) error {
 	// token := c.QueryParam("token")
 	// client := Client { dbConn: config.AppConfig.DatabaseConnections[serverIdToken] }
-	client := Client { dbConn: appConfig.DatabaseConnections[serverIdToken] }
 	// client := Client { dbConn: config.AppConfig }
 	// fmt.Println(token)
 	// return c.String(http.StatusOK, calll())
-	return c.String(http.StatusOK, client.OmsPingCall())
+
+	// client := Client { dbConn: appConfig.DatabaseConnections[serverIdToken] }
+	return c.String(http.StatusOK, "client.OmsPingCall()")
 }

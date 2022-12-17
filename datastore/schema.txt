@@ -1,0 +1,38 @@
+### Tables
+
+clients:
+  access_tokens: string
+  companies:
+    company_access_options:
+      - options
+    data_source:
+      - db_credentials:
+        - credentials
+      - file_path(csv):
+        - path
+
+clients -> access_tokens
+clients -> companies
+companies 1-1 company_access_options
+companies 1-1 data_source
+
+-----------------------------
+clients
+
+companies.client_id
+
+access_tokens.client_id
+access_tokens.company_id
+access_tokens.content
+
+data_source.company_id
+data_source.db_credentials
+data_source.file_path
+
+company_access_options.company_id
+company_access_options.Blocked
+company_access_options.BlockingEnabled
+company_access_options.BlockedMessage
+company_access_options.NotificationText
+company_access_options.TimeNextBlockingSec
+company_access_options.TimeBeforeNotificationSec
