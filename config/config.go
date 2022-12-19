@@ -13,6 +13,7 @@ import(
 )
 
 const DEV_CLIENT_TOKEN = "8fad429c-f54d-4b8d-87a6-874771c7f68b" // to distinguish server id to choose db
+const FILE_PATH = "../companies_access_options.csv"
 
 const DEFAULT_PORT_NUMBER = 4000
 const MAX_OPEN_DB_CONN = 10
