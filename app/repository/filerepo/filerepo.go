@@ -10,6 +10,7 @@ import(
 )
 
 func GetCompanysServerAccessOptions(companyId string) (models.ServerAccessOption, error) {
+	const serverIdToken = "8fad429c-f54d-4b8d-87a6-874771c7f68b" // to distinguish server id to choose db
 	var sao models.ServerAccessOption
 	// func takeDataFromCsv(sao models.ServerAccessOption, serverIdToken string) models.ServerAccessOption {
 	file, err := os.Open(config.FILE_PATH)

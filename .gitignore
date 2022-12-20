@@ -17,3 +17,4 @@
 .workarounds
 datastore/data/*
 *.DS_Store
+config/database.yml

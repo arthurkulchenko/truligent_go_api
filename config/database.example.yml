@@ -1,0 +1,36 @@
+default: &default
+  adapter: postgresql
+  encoding: utf8
+  pool: 5
+  username: "database username"
+  host: "database host"
+
+development:
+  <<: *default
+  database: "database name"
+  username: "database username"
+  password: "database password"
+  host: "database host"
+  port: "database port"
+
+test:
+  <<: *default
+  database: "database name"
+  password: "database password"
+
+staging:
+  <<: *default
+  database: "database name"
+  username: "database username"
+  password: "database password"
+  host: "database host"
+  port: "database port"
+
+production:
+  <<: *default
+  database: "database name"
+  username: "database username"
+  password: "database password"
+  host: "database host"
+  port: "database port"
+
