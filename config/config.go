@@ -7,6 +7,7 @@ import(
 	"fmt"
 	"database/sql"
 	"time"
+	"gopkg.in/yaml.v3"
 	_ "github.com/jackc/pgconn"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	_ "github.com/jackc/pgx/v4"
@@ -22,6 +23,7 @@ const MAX_DB_LIFETIME = 5 * time.Minute
 
 type AppConfig struct {
 	DatabaseConnections map[string]*sql.DB
+	FileStorage
 	PortNumber string
 	Environment string
 }
@@ -78,6 +80,8 @@ func credentialsToUrl(c DatabaseConfig) string {
 	return fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s", c.Host, c.Port, c.Database, c.Username, c.Password)
 }
 
+// TODO: Add multiple Databases creds, so this service could connect to several remote databases not just local main database
+
 func loadDbCreds() []DatabaseConfig {
 	// TODO: Load creds from config file
 	dbCredentials := make([]DatabaseConfig, 1)
@@ -90,4 +94,20 @@ func loadDbCreds() []DatabaseConfig {
 		Password: "truligent",
 	}
 	return dbCredentials
+}
+
+func readYaml() {
+	var config DatabaseConfig
+	// EXAMPLE
+	yfile, err := ioutil.ReadFile("config/database.yaml")
+	if err != nil { log.Fatal(err) }
+	data := make(map[interface{}]interface{})
+	err2 := yaml.Unmarshal(yfile, &data)
+	if err2 != nil {
+		log.Fatal(err2)
+	}
+	config = data[AppConfig.Environment]
+	// for k, v := range data {
+	// 	fmt.Printf("%s -> %d\n", k, v)
+	// }
 }
