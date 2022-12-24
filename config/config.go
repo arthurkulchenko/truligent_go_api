@@ -7,7 +7,7 @@ import(
 	"fmt"
 	"database/sql"
 	"time"
-	"gopkg.in/yaml.v3"
+	// "gopkg.in/yaml.v3"
 	_ "github.com/jackc/pgconn"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	_ "github.com/jackc/pgx/v4"
@@ -23,7 +23,7 @@ const MAX_DB_LIFETIME = 5 * time.Minute
 
 type AppConfig struct {
 	DatabaseConnections map[string]*sql.DB
-	FileStorage
+	FileStorage string
 	PortNumber string
 	Environment string
 }
@@ -97,16 +97,16 @@ func loadDbCreds() []DatabaseConfig {
 }
 
 func readYaml() {
-	var config DatabaseConfig
-	// EXAMPLE
-	yfile, err := ioutil.ReadFile("config/database.yaml")
-	if err != nil { log.Fatal(err) }
-	data := make(map[interface{}]interface{})
-	err2 := yaml.Unmarshal(yfile, &data)
-	if err2 != nil {
-		log.Fatal(err2)
-	}
-	config = data[AppConfig.Environment]
+	// var config DatabaseConfig
+	// // EXAMPLE
+	// yfile, err := ioutil.ReadFile("config/database.yaml")
+	// if err != nil { log.Fatal(err) }
+	// data := make(map[interface{}]interface{})
+	// err2 := yaml.Unmarshal(yfile, &data)
+	// if err2 != nil {
+	// 	log.Fatal(err2)
+	// }
+	// config = data[AppConfig.Environment]
 	// for k, v := range data {
 	// 	fmt.Printf("%s -> %d\n", k, v)
 	// }

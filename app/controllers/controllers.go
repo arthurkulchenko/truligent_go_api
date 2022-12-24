@@ -6,6 +6,7 @@ import(
 	"encoding/json"
 	"github.com/labstack/echo/v4"
 	"github.com/arthurkulchenko/truligent_go_api/app/services"
+	"log"
 )
 
 type ResultObject struct {
@@ -20,20 +21,20 @@ type ProccessObject struct {
 	State string
 }
 
-func (o ResultObject) value() {
-	if o.Error != nil {
-		return o.Error
-	}
-	if o.StringValue != nil {
-		return o.StringValue
-	}
-	if o.IntValue != nil {
-		return o.IntValue
-	}
-	if o.BoolValue != nil {
-		return o.BoolValue
-	}
-}
+// func (o ResultObject) value() {
+// 	if o.Error != nil {
+// 		return o.Error
+// 	}
+// 	if o.StringValue != nil {
+// 		return o.StringValue
+// 	}
+// 	if o.IntValue != nil {
+// 		return o.IntValue
+// 	}
+// 	if o.BoolValue != nil {
+// 		return o.BoolValue
+// 	}
+// }
 
 func RotateToken(c echo.Context) error {
 	defer c.Request().Body.Close()
@@ -48,7 +49,7 @@ func RotateToken(c echo.Context) error {
 	}
 	// requestBody := unmarshalRequest(body, logAndReturn, "error message")
 	// getToken instrad of company_id, 
-	requestBody := struct { CompanyId string `json:"company_id"` }{}
+	requestBody := struct { CompanyId string `json:"token"` }{}
 	err = json.Unmarshal(body, &requestBody)
 	if err != nil {
 		log.Println("failed to unmatshal rotate_token request body: %s", err)

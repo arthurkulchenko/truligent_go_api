@@ -22,5 +22,5 @@ func main() {
 
 	if err := e.Start(appConfig.PortNumber); err != http.ErrServerClosed {
 		e.Logger.Fatal(err)
-  }
+	}
 }
