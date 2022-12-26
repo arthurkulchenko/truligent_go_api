@@ -3,46 +3,47 @@ package services
 import(
 	"log"
 	"time"
-	"github.com/arthurkulchenko/truligent_go_api/app/repository"
+	"encoding/base64"
+	"github.com/arthurkulchenko/truligent_go_api/app/repository/filerepo"
+	// "strings"
 	// "github.com/arthurkulchenko/truligent_go_api/app/controllers"
-	// "github.com/golang-jwt/jwt"
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/go-jose/go-jose/v3"
+	"encoding/json"
 	"github.com/arthurkulchenko/truligent_go_api/app/models"
 )
 
 func RotateTokenService(companyId string) (string, error) {
-	dataSource := repository.filerepo
-	sao, err := dataSource.GetCompanysServerAccessOptions(companyId)
+	// dataSource := repository.filerepo
+	sao, err := filerepo.GetCompanysServerAccessOptions(companyId)
 	if err != nil { log.Println(err) }
-	// TODO:
-	// Token Rotation
 	var key string
-	if sao.TimeNextBlockingSec > time.Now().Unix() {
-		key = sao.LocalClientSessionToken
+	currentTime := time.Now().Unix()
+	if sao.TimeNextBlockingSec > currentTime {
+		key = sao.CurrentClientPrivateKey
 	} else {
+		// Will block company
 		key = sao.CloudClientSessionToken
 	}
 	tokenString, _ := encryptData(sao, key)
-	// TODO:
-	// TimeLastSuccessfulPingAt
-	// TimeLastPingAt
-	_, err = CreateOrPutCompanysServerAccessOptions(companyId, sao)
+	log.Println(sao.TimeLastSuccessfulPingAt)
+	sao.TimeLastSuccessfulPingAt = currentTime
+	sao.TimeLastPingAt = currentTime
+	log.Println(currentTime)
+
+	_, err = filerepo.CreateOrPutCompanysServerAccessOptions(companyId, sao)
 	return tokenString, err
 }
 
 func encryptData(sao models.ServerAccessOption, key string) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"blocked": sao.Blocked,
-		"blocking_enabled": sao.BlockingEnabled,
-		"blocked_message": sao.BlockedMessage,
-		"notification_text": sao.NotificationText,
-		"time_next_blocking_sec": sao.TimeNextBlockingSec,
-		"time_before_notification_sec": sao.TimeBeforeNotificationSec,
-	})
-	tokenString, err := token.SignedString([]byte(key))
-	if err != nil {
-		log.Println(err)
-		return "", err
-	}
-	return tokenString, err
+	var err error
+	payload, _ := json.Marshal(sao)
+	bytePrivatKey := []byte(key)
+	byteKey := make([]byte, base64.StdEncoding.EncodedLen(len(bytePrivatKey)))
+	base64.StdEncoding.Encode(byteKey, bytePrivatKey)
+	if err != nil { panic(err) }
+	encrypter, err := jose.NewEncrypter(jose.A128GCM, jose.Recipient{Algorithm: jose.PBES2_HS256_A128KW, Key: string(byteKey)}, nil)
+	encObj, err := encrypter.Encrypt([]byte(payload))
+	tokenString, err := encObj.CompactSerialize()
+	if err != nil { panic(err) }
+	return string(string(tokenString)), err
 }
