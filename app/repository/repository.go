@@ -8,7 +8,7 @@ import(
 
 type StorageInterface interface {
 	GetCompanysServerAccessOptions(clientToken string) (models.ServerAccessOption, error)
-	CreateOrPutCompanysServerAccessOptions(companyId string, sao models.ServerAccessOption) (string, error)
+	PutCompanysServerAccessOptions(clientToken string, sao models.ServerAccessOption) (string, error)
 }
 
 // func () {

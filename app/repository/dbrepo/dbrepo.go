@@ -64,9 +64,15 @@ func GetCompanysServerAccessOptions(clientToken string) (models.ServerAccessOpti
 	return sao, err
 }
 
-func CreateOrPutCompanysServerAccessOptions(companyId string, sao models.ServerAccessOption) (string, error) {
+func PutCompanysServerAccessOptions(clientToken string, sao models.ServerAccessOption) (string, error) {
 	// var sao models.ServerAccessOption
 	// TODO:
 	// UPDATE companies server_access_options ->> 'time_last_successful_ping_at'
 	// UPDATE companies server_access_options ->> 'time_last_ping_at'
+	panic("NOT IMPLEMENTED")
 }
+
+// func FindCompanyIdByAccessToken(token string) string {
+// 	// TODO
+// 	panic("NOT IMPLEMENTED")
+// }
